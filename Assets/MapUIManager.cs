@@ -9,9 +9,10 @@ public class MapUIManager : MonoBehaviour
 
     [Header("地圖介面")]
     [SerializeField] private GameObject mapUI;
+    [SerializeField] private GameObject mapArea; // 👈 這是地圖 Cube 區域
 
     [Header("建築物介紹")]
-    [SerializeField] private CanvasGroup infoPanelGroup; // ✅ 用 CanvasGroup 控制透明度
+    [SerializeField] private CanvasGroup infoPanelGroup;
     [SerializeField] private Text titleText;
     [SerializeField] private Text descriptionText;
     [SerializeField] private Button closeInfoButton;
@@ -21,7 +22,7 @@ public class MapUIManager : MonoBehaviour
     [SerializeField] private Button closeMapButton;
 
     [Header("打字機效果設定")]
-    [SerializeField] private float typingSpeed = 0.05f; // 打字間隔時間
+    [SerializeField] private float typingSpeed = 0.05f;
 
     private Coroutine typingCoroutine;
 
@@ -42,6 +43,7 @@ public class MapUIManager : MonoBehaviour
     {
         mainUI.SetActive(false);
         mapUI.SetActive(true);
+        if (mapArea != null) mapArea.SetActive(true); // 開地圖時顯示建築物區域
     }
 
     private void CloseMap()
@@ -50,9 +52,11 @@ public class MapUIManager : MonoBehaviour
         mainUI.SetActive(true);
     }
 
-    // 顯示建築物介紹 (帶淡入 + 打字機)
+    // 顯示建築物介紹
     public void ShowBuildingInfo(string title, string description)
     {
+        if (mapArea != null) mapArea.SetActive(false); // ✅ 顯示介紹時隱藏地圖區域
+
         infoPanelGroup.gameObject.SetActive(true);
         StartCoroutine(FadeCanvasGroup(infoPanelGroup, 0, 1, 0.5f));
 
@@ -61,17 +65,16 @@ public class MapUIManager : MonoBehaviour
         typingCoroutine = StartCoroutine(TypeText(description));
     }
 
-    // 關閉建築物介紹 (淡出)
+    // 關閉建築物介紹
     public void HideBuildingInfo()
     {
+        if (mapArea != null) mapArea.SetActive(true); // ✅ 關閉介紹時顯示回地圖區域
         StartCoroutine(FadeOutAndDisable(infoPanelGroup, 0.5f));
     }
 
-    // 打字機效果
     private IEnumerator TypeText(string fullText)
     {
-        descriptionText.text = "";  // 清空舊文字
-
+        descriptionText.text = "";
         foreach (char c in fullText)
         {
             descriptionText.text += c;
@@ -79,7 +82,6 @@ public class MapUIManager : MonoBehaviour
         }
     }
 
-    // 淡入淡出控制
     private IEnumerator FadeCanvasGroup(CanvasGroup canvasGroup, float from, float to, float duration)
     {
         float elapsed = 0f;
