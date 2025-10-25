@@ -1,4 +1,4 @@
-using System;
+锘縰sing System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -7,22 +7,22 @@ using UnityEngine.Networking;
 public class ChatOllama : LLM
 {
     /// <summary>
-    /// AI设定
+    /// AI脡猫露篓
     /// </summary>
     public string m_SystemSetting = string.Empty;
     /// <summary>
-    /// 设置模型,模型类型自行添加
+    /// 脡猫脰脙脛拢脨脥,脛拢脨脥脌脿脨脥脳脭脨脨脤铆录脫
     /// </summary>
     public ModelType m_GptModel = ModelType.llama3;
 
     private void Start()
     {
-        //运行时，添加AI设定
+        //脭脣脨脨脢卤拢卢脤铆录脫AI脡猫露篓
         m_DataList.Add(new SendData("system", m_SystemSetting));
     }
 
     /// <summary>
-    /// 发送消息
+    /// 路垄脣脥脧没脧垄
     /// </summary>
     /// <returns></returns>
     public override void PostMsg(string _msg, Action<string> _callback)
@@ -31,7 +31,7 @@ public class ChatOllama : LLM
     }
 
     /// <summary>
-    /// 调用接口
+    /// 碌梅脫脙陆脫驴脷
     /// </summary>
     /// <param name="_postWord"></param>
     /// <param name="_callback"></param>
@@ -65,7 +65,7 @@ public class ChatOllama : LLM
                 {
 
                     string _backMsg = _textback.message.content;
-                    //添加记录
+                    //脤铆录脫录脟脗录
                     m_DataList.Add(new SendData("assistant", _backMsg));
                     _callback(_backMsg);
                 }
@@ -77,11 +77,11 @@ public class ChatOllama : LLM
             }
 
             stopwatch.Stop();
-            Debug.Log("Ollama耗时：" + stopwatch.Elapsed.TotalSeconds);
+            Debug.Log("Ollama潞脛脢卤拢潞" + stopwatch.Elapsed.TotalSeconds);
         }
     }
 
-    #region 数据定义
+    #region 脢媒戮脻露篓脪氓
 
     public enum ModelType
     {
@@ -93,7 +93,7 @@ public class ChatOllama : LLM
     {
         public string model;
         public List<SendData> messages;
-        public bool stream = false;//流式
+        public bool stream = false;//脕梅脢陆
     }
     [Serializable]
     public class MessageBack

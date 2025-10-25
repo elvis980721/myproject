@@ -8,12 +8,18 @@ public class MenuUIManager : MonoBehaviour
     [Header("聊天介面 (要隱藏的 UI)")]
     [SerializeField] private GameObject chatUI;
 
+    [Header("人物模型設定 (3D 角色)")]
+    [SerializeField] private Transform characterModel; // ✅ 拖你的 3D 人物
+    [SerializeField] private Vector3 defaultPosition;   // ✅ 對話模式位置
+    [SerializeField] private Vector3 menuPosition;      // ✅ 開啟選單時位置
+    [SerializeField] private float moveSpeed = 3f;      // ✅ 平滑移動速度
+
     [Header("主按鈕")]
     [SerializeField] private Button mainButton;
 
     [Header("選單面板")]
     [SerializeField] private GameObject panelMenu;
-    [SerializeField] private CanvasGroup panelMenuCanvasGroup; // ✅ CanvasGroup 控制淡入淡出
+    [SerializeField] private CanvasGroup panelMenuCanvasGroup;
     [SerializeField] private Button btnDeptIntro;
     [SerializeField] private Button btnSelfIntro;
     [SerializeField] private Button btnCourses;
@@ -42,30 +48,29 @@ public class MenuUIManager : MonoBehaviour
 
     void Start()
     {
-        // 預設隱藏
+        // 初始化 UI 狀態
         panelMenu.SetActive(false);
         panelContent.SetActive(false);
 
-        // 主按鈕 → 開關選單
-        mainButton.onClick.AddListener(ToggleMenu);
+        if (characterModel != null)
+            defaultPosition = characterModel.position; // 記錄角色初始位置
 
-        // 關閉選單按鈕
+        // 綁定按鈕事件
+        mainButton.onClick.AddListener(ToggleMenu);
         if (btnCloseMenu != null)
             btnCloseMenu.onClick.AddListener(CloseMenuPanel);
 
-        // 點選各個選項 (文字來自 Inspector，音檔自動對應)
         btnDeptIntro.onClick.AddListener(() => ShowContent("歷史發展", deptIntroText));
         btnSelfIntro.onClick.AddListener(() => ShowContent("課程介紹", selfIntroText));
         btnCourses.onClick.AddListener(() => ShowContent("畢業規定", courseIntroText));
 
-        // 關閉介紹 → 回到選單
         btnCloseContent.onClick.AddListener(() =>
         {
             panelContent.SetActive(false);
             ShowMenuPanel();
         });
 
-        // ✅ 自動載入 Resources/Audio 下的所有音檔
+        // 自動載入音檔
         AudioClip[] clips = Resources.LoadAll<AudioClip>("Audio");
         foreach (var clip in clips)
         {
@@ -90,6 +95,10 @@ public class MenuUIManager : MonoBehaviour
         isMenuOpen = true;
         panelMenu.SetActive(true);
         if (chatUI != null) chatUI.SetActive(false);
+
+        // 角色平滑移動到右側
+        if (characterModel != null)
+            StartCoroutine(MoveCharacter(menuPosition));
     }
 
     private void CloseMenuPanel()
@@ -97,6 +106,10 @@ public class MenuUIManager : MonoBehaviour
         isMenuOpen = false;
         panelMenu.SetActive(false);
         if (chatUI != null) chatUI.SetActive(true);
+
+        // 角色回原位
+        if (characterModel != null)
+            StartCoroutine(MoveCharacter(defaultPosition));
     }
 
     private void ShowContent(string title, string content)
@@ -107,21 +120,27 @@ public class MenuUIManager : MonoBehaviour
 
         textTitle.text = title;
 
-        // 打字機效果
         if (typingCoroutine != null)
             StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(content));
 
-        // ✅ 播放對應音檔
-        if (audioSource != null && audioClipMap.ContainsKey(title))
+        PlayAudio(title);
+    }
+
+    private void PlayAudio(string title)
+    {
+        if (audioSource == null) return;
+
+        string cleanTitle = title.Replace(" ", ""); // 移除空格
+        if (audioClipMap.TryGetValue(cleanTitle, out AudioClip clip))
         {
             audioSource.Stop();
-            audioSource.clip = audioClipMap[title];
+            audioSource.clip = clip;
             audioSource.Play();
         }
         else
         {
-            Debug.LogWarning($"⚠ 沒有找到對應的音檔：{title}");
+            Debug.LogWarning($"⚠ 沒有找到對應的音檔：{cleanTitle}");
         }
     }
 
@@ -136,18 +155,19 @@ public class MenuUIManager : MonoBehaviour
         typingCoroutine = null;
     }
 
-    private IEnumerator FadeInPanel(CanvasGroup canvasGroup)
+    // ✅ 平滑移動角色
+    private IEnumerator MoveCharacter(Vector3 targetPos)
     {
-        float duration = 0.5f;
-        float time = 0f;
+        Vector3 startPos = characterModel.position;
+        float elapsed = 0f;
 
-        while (time < duration)
+        while (elapsed < 1f)
         {
-            time += Time.deltaTime;
-            canvasGroup.alpha = Mathf.Lerp(0f, 1f, time / duration);
+            elapsed += Time.deltaTime * moveSpeed;
+            characterModel.position = Vector3.Lerp(startPos, targetPos, elapsed);
             yield return null;
         }
 
-        canvasGroup.alpha = 1f;
+        characterModel.position = targetPos;
     }
 }

@@ -7,9 +7,15 @@ public class MapUIManager : MonoBehaviour
     [Header("主介面")]
     [SerializeField] private GameObject mainUI;
 
+    [Header("人物模型設定 (3D 角色)")]
+    [SerializeField] private Transform characterModel; // ✅ 拖你的 3D 人物
+    [SerializeField] private Vector3 defaultPosition;   // ✅ 對話模式位置
+    [SerializeField] private Vector3 infoPanelPosition; // ✅ 介紹時角色的位置
+    [SerializeField] private float moveSpeed = 3f;
+
     [Header("地圖介面")]
     [SerializeField] private GameObject mapUI;
-    [SerializeField] private GameObject mapArea; // 👈 這是地圖 Cube 區域
+    [SerializeField] private GameObject mapArea; // 👈 地圖 Cube 區域
 
     [Header("建築物介紹")]
     [SerializeField] private CanvasGroup infoPanelGroup;
@@ -25,6 +31,7 @@ public class MapUIManager : MonoBehaviour
     [SerializeField] private float typingSpeed = 0.05f;
 
     private Coroutine typingCoroutine;
+    private Coroutine moveCoroutine;
 
     private void Start()
     {
@@ -32,6 +39,9 @@ public class MapUIManager : MonoBehaviour
         mainUI.SetActive(true);
         mapUI.SetActive(false);
         infoPanelGroup.gameObject.SetActive(false);
+
+        if (characterModel != null)
+            defaultPosition = characterModel.position;
 
         // 綁定按鈕
         openMapButton.onClick.AddListener(OpenMap);
@@ -43,7 +53,7 @@ public class MapUIManager : MonoBehaviour
     {
         mainUI.SetActive(false);
         mapUI.SetActive(true);
-        if (mapArea != null) mapArea.SetActive(true); // 開地圖時顯示建築物區域
+        if (mapArea != null) mapArea.SetActive(true);
     }
 
     private void CloseMap()
@@ -63,6 +73,13 @@ public class MapUIManager : MonoBehaviour
         titleText.text = title;
         if (typingCoroutine != null) StopCoroutine(typingCoroutine);
         typingCoroutine = StartCoroutine(TypeText(description));
+
+        // ✅ 移動角色到右側（infoPanelPosition）
+        if (characterModel != null)
+        {
+            if (moveCoroutine != null) StopCoroutine(moveCoroutine);
+            moveCoroutine = StartCoroutine(MoveCharacter(infoPanelPosition));
+        }
     }
 
     // 關閉建築物介紹
@@ -70,6 +87,13 @@ public class MapUIManager : MonoBehaviour
     {
         if (mapArea != null) mapArea.SetActive(true); // ✅ 關閉介紹時顯示回地圖區域
         StartCoroutine(FadeOutAndDisable(infoPanelGroup, 0.5f));
+
+        // ✅ 回到預設位置
+        if (characterModel != null)
+        {
+            if (moveCoroutine != null) StopCoroutine(moveCoroutine);
+            moveCoroutine = StartCoroutine(MoveCharacter(defaultPosition));
+        }
     }
 
     private IEnumerator TypeText(string fullText)
@@ -101,5 +125,20 @@ public class MapUIManager : MonoBehaviour
     {
         yield return FadeCanvasGroup(canvasGroup, 1, 0, duration);
         canvasGroup.gameObject.SetActive(false);
+    }
+
+    private IEnumerator MoveCharacter(Vector3 targetPos)
+    {
+        Vector3 startPos = characterModel.position;
+        float elapsed = 0f;
+
+        while (elapsed < 1f)
+        {
+            elapsed += Time.deltaTime * moveSpeed;
+            characterModel.position = Vector3.Lerp(startPos, targetPos, elapsed);
+            yield return null;
+        }
+
+        characterModel.position = targetPos;
     }
 }
